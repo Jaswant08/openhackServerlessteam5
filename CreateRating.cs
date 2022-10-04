@@ -17,23 +17,26 @@ namespace oh5.serverless
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
-
-            string name = req.Query["name"];
+            log.LogInformation("CreateRating triggered");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
             
-            int num = 0;
-            int.TryParse(data?.rating, out num);
+            string userId = data?.userId;
+            string productId = data?.productId;
+            string locationName = data?.locationName;
+            string userNotes = data?.userNotes;
 
-            Rating rating = new Rating
+            int rating = 0;
+            int.TryParse(data?.rating, out rating);
+
+            var iceCreamRating = new IceCreamRating
             {
-                userId = data?.userId,
-                productId = data?.productId,
-                locationName = data?.locationName,
-                rating = num,
-                userNotes = data?.userNotes
+                UserId = userId,
+                ProductId = productId,
+                LocationName = locationName,
+                Rating = rating,
+                UserNotes = userNotes
             };
 
             string responseMessage = string.IsNullOrEmpty(name)
