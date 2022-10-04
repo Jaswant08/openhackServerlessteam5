@@ -28,15 +28,15 @@ namespace oh5.serverless
                 return new NotFoundResult();
             }
 
-            var rating = new Rating()
+            var rating = new IceCreamRating()
             {
-                id = ratingId,
-                productId = "product 123",
-                rating = 4,
-                timestamp = DateTime.Now.ToLongDateString(),
-                locationName = "DC",
-                userId = "system",
-                userNotes = "It's awesome"
+                Id = ratingId,
+                ProductId = "product 123",
+                Rating = 4,
+                Timestamp = DateTime.Now.ToLongDateString(),
+                LocationName = "DC",
+                UserId = "system",
+                UserNotes = "It's awesome"
             };
 
             return new OkObjectResult(rating);
