@@ -7,29 +7,39 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Microsoft.Azure.Cosmos;
+using System.Collections.Generic;
 
 namespace oh5.serverless
 {
-    public static class GetRating
-    {
+    public class GetRating
+    {       
         [FunctionName("GetRating")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
+        public async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,           
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            string ratingId = req.Query["ratingId"];
 
-            string name = req.Query["name"];
+            log.LogInformation("Get rating received request with ratingId : {0}", ratingId);            
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            if (ratingId == null || ratingId == String.Empty)
+            {
+                return new NotFoundResult();
+            }
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+            var rating = new Rating()
+            {
+                id = ratingId,
+                productId = "product 123",
+                rating = 4,
+                timestamp = DateTime.Now.ToLongDateString(),
+                locationName = "DC",
+                userId = "system",
+                userNotes = "It's awesome"
+            };
 
-            return new OkObjectResult(responseMessage);
+            return new OkObjectResult(rating);
         }
     }
 }
