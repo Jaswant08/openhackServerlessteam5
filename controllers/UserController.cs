@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace oh5.serverless
 {
-    public class ProductController
+    public class UserController
     {
-        private static readonly Lazy<ProductController> lazy =
-            new Lazy<ProductController>(() => new ProductController());
+        private static readonly Lazy<UserController> lazy =
+            new Lazy<UserController>(() => new UserController());
 
-        public static ProductController Instance { get { return lazy.Value; } }
+        public static UserController Instance { get { return lazy.Value; } }
 
-        private ProductController()
+        private UserController()
         {
             client = new HttpClient();
             client.DefaultRequestHeaders.Accept.Clear();
@@ -24,16 +24,16 @@ namespace oh5.serverless
         private readonly HttpClient client;
         private const string uri = "https://serverlessohapi.azurewebsites.net/api/GetProduct";
 
-        public async Task<Product> GetProductAsync(string productId)
+        public async Task<User> GetUserAsync(string productId)
         {
-            string path = uri + "?productId=" + productId;
-            Product product = null;
+            string path = uri + "?userId=" + productId;
+            User user = null;
             HttpResponseMessage response = await client.GetAsync(path);
             if (response.IsSuccessStatusCode)
             {
-                product = await response.Content.ReadAsAsync<Product>();
+                user = await response.Content.ReadAsAsync<User>();
             }
-            return product;
+            return user;
         }
     }
 }
