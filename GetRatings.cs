@@ -7,29 +7,53 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Microsoft.Azure.Cosmos;
+using System.Collections.Generic;
 
 namespace oh5.serverless
 {
     public static class GetRatings
     {
         [FunctionName("GetRatings")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            ILogger log)
+        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req, ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            string userId = req.Query["userId"];
 
-            string name = req.Query["name"];
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return new BadRequestObjectResult("User id cannot be empty.");
+            }
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            User user = await UserController.Instance.GetUserAsync(userId);
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+            if (user == null)
+            {
+                string msg = $"User with id '{userId}' not found.";
 
-            return new OkObjectResult(responseMessage);
+                log.LogError(msg);
+
+                return new NotFoundObjectResult(msg);
+            }
+
+            // Use a data service to store the ratings information to the backend
+            CosmosClient cosmosClient = new CosmosClient(CosmosSettings.ConnectionString, CosmosSettings.Options);
+            Database database = await cosmosClient.CreateDatabaseIfNotExistsAsync(CosmosSettings.DatabaseId);
+            Container container = await database.CreateContainerIfNotExistsAsync(CosmosSettings.ContainerId, CosmosSettings.PartitionKeyPath);
+            QueryDefinition queryDefinition = new QueryDefinition("select * from c where c.userId = @userId").WithParameter("@userId", userId);
+
+            List<IceCreamRating> result = new();
+
+            using (FeedIterator<IceCreamRating> iterator = container.GetItemQueryIterator<IceCreamRating>(queryDefinition))
+            {
+                while (iterator.HasMoreResults)
+                {
+                    var ratings = await iterator.ReadNextAsync();
+
+                    result.AddRange(ratings);
+                }
+            }
+
+            return new OkObjectResult(result);
         }
     }
 }
