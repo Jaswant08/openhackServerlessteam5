@@ -5,13 +5,17 @@ namespace oh5.serverless
 {
     public static class CosmosSettings
     {
+        public const string ConnectionName = "COSMOSDBCONSTR";
+
         // Pulls the connection string value from the environment variables
         // In Azure this pulls from the Key Vault, using the secret 'cosmosdbconnectionstring'
         public static string ConnectionString
         {
             get
             {
-                string connStr = Environment.GetEnvironmentVariable("ConnectionStrings:COSMOSDBCONSTR");
+                string connStr = Environment.GetEnvironmentVariable("CUSTOMCONNSTR_" + ConnectionName);
+                if (string.IsNullOrEmpty(connStr))
+                    connStr = Environment.GetEnvironmentVariable("ConnectionStrings:" + ConnectionName);
                 return connStr;
             }
         }
