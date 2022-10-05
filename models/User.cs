@@ -4,13 +4,13 @@ namespace oh5.serverless
 {
     public class User
     {
-        [JsonProperty(propertyName: "userId")]
+        [JsonProperty("userId")]
         public string Id { get; set; }
 
-        [JsonProperty(propertyName: "userName")]
+        [JsonProperty("userName")]
         public string Name { get; set; }
 
-        [JsonProperty(propertyName: "fullName")]
+        [JsonProperty("fullName")]
         public string FullName { get; set; }
     }
 }

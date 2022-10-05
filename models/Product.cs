@@ -4,13 +4,13 @@ namespace oh5.serverless
 {
     public class Product
     {
-        [JsonProperty(propertyName: "productId")]
+        [JsonProperty("productId")]
         public string Id { get; set; }
 
-        [JsonProperty(propertyName: "productName")]
+        [JsonProperty("productName")]
         public string Name { get; set; }
 
-        [JsonProperty(propertyName: "productDescription")]
+        [JsonProperty("productDescription")]
         public string Description { get; set; }
     }
 }

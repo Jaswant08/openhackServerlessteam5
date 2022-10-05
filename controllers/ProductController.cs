@@ -8,10 +8,25 @@ namespace oh5.serverless
 {
     public class ProductController
     {
-        static HttpClient client = new HttpClient();
+        private static readonly Lazy<ProductController> lazy =
+            new Lazy<ProductController>(() => new ProductController());
 
-        static async Task<Product> GetProductAsync(string path)
+        public static ProductController Instance { get { return lazy.Value; } }
+
+        private ProductController()
         {
+            client = new HttpClient();
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+        }
+
+        private readonly HttpClient client;
+        private const string uri = "https://serverlessohapi.azurewebsites.net/api/GetProduct";
+
+        public async Task<Product> GetProductAsync(string productId)
+        {
+            string path = uri + "?productId=" + productId;
             Product product = null;
             HttpResponseMessage response = await client.GetAsync(path);
             if (response.IsSuccessStatusCode)
