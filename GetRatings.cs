@@ -21,7 +21,7 @@ namespace oh5.serverless
 
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return new BadRequestObjectResult("User id cannot be empty.");
+                return new BadRequestObjectResult("User id cannot be empty.v2");
             }
 
             User user = await UserController.Instance.GetUserAsync(userId);
