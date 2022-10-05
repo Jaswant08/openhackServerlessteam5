@@ -1,17 +1,14 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
-using System.Configuration;
-using System.Linq;
-using Microsoft.Azure.Cosmos;
+using System;
+using System.IO;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace oh5.serverless
 {
@@ -25,53 +22,56 @@ namespace oh5.serverless
             log.LogInformation("CreateRating triggered");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            
-            string userId = data?.userId;
-            string productId = data?.productId;
-            string locationName = data?.locationName;
-            string userNotes = data?.userNotes;
+            IceCreamRating rating = JsonConvert.DeserializeObject<IceCreamRating>(requestBody);
 
-            // Validate both userId and productId by calling the existing API endpoints.
-            // You can find a user id to test with from the sample payload above
-            var product = ProductController.Instance.GetProductAsync(productId);
+            // Validate the productId by calling the existing API endpoint
+            Product product = await ProductController.Instance.GetProductAsync(rating.ProductId);
             if (product == null)
-                return new NotFoundObjectResult($"Product with id '{productId}' not found.");
-
-            var user = UserController.Instance.GetUserAsync(userId);
-            if (user == null)
-                return new NotFoundObjectResult($"User with id '{userId}' not found.");
-
-            // Validate that the rating field is an integer from 0 to 5
-            int rating = 0;
-            if (!int.TryParse(data?.rating, out rating) || rating < 0 || rating > 5)
-                return new BadRequestObjectResult($"Rating is not valid. Must be a number betwen 0 and 5.");
-
-            var iceCreamRating = new IceCreamRating
             {
-                UserId = userId,
-                ProductId = productId,
-                LocationName = locationName,
-                Rating = rating,
-                UserNotes = userNotes
-            };
+                string msg = $"Product with id '{rating.ProductId}' not found.";
+                log.LogError(msg);
+                return new NotFoundObjectResult(msg);
+            }
+
+            // Validate the userId by calling the existing API endpoint
+            User user = await UserController.Instance.GetUserAsync(rating.UserId);
+            if (user == null)
+            {
+                string msg = $"User with id '{rating.UserId}' not found.";
+                log.LogError(msg);
+                return new NotFoundObjectResult(msg);
+            }
+
+            // Validate that the rating is an integer from 0 to 5            
+            if (!int.TryParse(rating.Rating, out int r) || r < 0 || r > 5)
+            {
+                string msg = $"Rating '{rating.Rating}' is not valid. Must be a number betwen 0 and 5.";
+                log.LogError(msg);
+                return new BadRequestObjectResult(msg);
+            }
 
             // Add a property called id with a GUID value
-            iceCreamRating.Id = Guid.NewGuid().ToString();
+            rating.Id = Guid.NewGuid().ToString();
 
             // Add a property called timestamp with the current UTC date time
-            iceCreamRating.Timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd hh:mm:ssZ");
+            rating.Timestamp = DateTime.UtcNow.ToString(CosmosSettings.TimestampFormat);
 
             // Use a data service to store the ratings information to the backend
-            //  - Get CosmosDB connection string
-            //  - Write to CosmosDB
-            var connStr = Environment.GetEnvironmentVariable("COSMOSDBCONSTR");
-            
-            //var cosmosClient = new CosmosClient(connStr);
-            //var database = await cosmosClient.CreateDatabaseIfNotExistsAsync("IceCreamRatings");
-            
+            CosmosClient cosmosClient = new CosmosClient(CosmosSettings.ConnectionString, CosmosSettings.Options);
+            Database database = await cosmosClient.CreateDatabaseIfNotExistsAsync(CosmosSettings.DatabaseId);
+            Container container = await database.CreateContainerIfNotExistsAsync(CosmosSettings.ContainerId, CosmosSettings.PartitionKeyPath);
+            ItemResponse<IceCreamRating> createItemResponse =
+                await container.CreateItemAsync<IceCreamRating>(rating, new PartitionKey(rating.Id));
+            HttpStatusCode code = createItemResponse.StatusCode;
+            if (code != HttpStatusCode.Created)
+            {
+                string msg = $"Received code {code} ({(int)code}) while creating item in database";
+                log.LogError(msg);
+                return new ConflictObjectResult(msg);
+            }
+
             // Return the entire review JSON payload with the newly created id and timestamp            
-            return new OkObjectResult(iceCreamRating);
+            return new OkObjectResult(rating);
         }
     }
 }

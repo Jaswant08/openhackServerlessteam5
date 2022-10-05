@@ -31,7 +31,7 @@ namespace oh5.serverless
             {
                 Id = ratingId,
                 ProductId = "product 123",
-                Rating = 4,
+                Rating = "4",
                 Timestamp = DateTime.Now.ToLongDateString(),
                 LocationName = "DC",
                 UserId = "system",

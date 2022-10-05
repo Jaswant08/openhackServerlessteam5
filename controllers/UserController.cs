@@ -22,7 +22,7 @@ namespace oh5.serverless
         }
 
         private readonly HttpClient client;
-        private const string uri = "https://serverlessohapi.azurewebsites.net/api/GetProduct";
+        private const string uri = "https://serverlessohapi.azurewebsites.net/api/GetUser";
 
         public async Task<User> GetUserAsync(string productId)
         {
