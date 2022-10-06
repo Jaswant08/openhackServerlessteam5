@@ -15,7 +15,7 @@ namespace OpenHackTeam5
     public static class CreateOrders
     {
         [FunctionName("CreateOrders")]
-        public static async Task Run([EventHubTrigger("poseh100622", Connection = "Endpoint=sb://posnamespace100622.servicebus.windows.net/;SharedAccessKeyName=ListenPermission;SharedAccessKey=/hmLEEelF0lHFeIjdNdKg16TcICVutIoDKW6syXhOvc=;EntityPath=poseh100622")] EventData[] events, ILogger log)
+        public static async Task Run([EventHubTrigger("poseh100622", Connection = "EHCONNSTR")] EventData[] events, ILogger log)
         {
             CosmosClient cosmosClient = new CosmosClient(CosmosSettings.ConnectionString, CosmosSettings.Options);
             Database database = await cosmosClient.CreateDatabaseIfNotExistsAsync(CosmosSettings.DatabaseId);
