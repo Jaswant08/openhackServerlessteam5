@@ -31,7 +31,7 @@ namespace OpenHackTeam5
                 var order = JsonSerializer.Deserialize<Order>(json);
                 order.id = Guid.NewGuid().ToString();
 
-                ItemResponse<Order> createItemResponse = await container.CreateItemAsync(order, new PartitionKey(order.Id));
+                ItemResponse<Order> createItemResponse = await container.CreateItemAsync(order, new PartitionKey(order.id));
                 HttpStatusCode code = createItemResponse.StatusCode;
 
             }
