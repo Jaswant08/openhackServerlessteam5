@@ -38,6 +38,7 @@ namespace oh5.serverless
 
         public const string DatabaseId = "IceCreamDatabase";
         public const string ContainerId = "IceCreamRatings";
+        public const string EhOrdersContainerId = "ehorders";
         public const string PartitionKeyPath = "/id";
         public const string TimestampFormat = "yyyy-MM-dd hh:mm:ssZ";
     }
