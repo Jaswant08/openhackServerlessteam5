@@ -17,7 +17,9 @@ namespace OpenHackTeam5
         [FunctionName("CreateOrders")]
         public static async Task Run([EventHubTrigger("poseh100622", Connection = "EHCONNSTR")] EventData[] events, ILogger log)
         {
-            CosmosClient cosmosClient = new CosmosClient(CosmosSettings.ConnectionString, CosmosSettings.Options);
+            CosmosClientOptions options = new CosmosClientOptions { SerializerOptions = new CosmosSerializationOptions { PropertyNamingPolicy = CosmosPropertyNamingPolicy.Default } };
+            
+            CosmosClient cosmosClient = new CosmosClient(CosmosSettings.ConnectionString, options);
             Database database = await cosmosClient.CreateDatabaseIfNotExistsAsync(CosmosSettings.DatabaseId);
             Container container = await database.CreateContainerIfNotExistsAsync(CosmosSettings.EhOrdersContainerId, CosmosSettings.PartitionKeyPath);
 
@@ -27,7 +29,7 @@ namespace OpenHackTeam5
                 log.LogInformation(json);
 
                 var order = JsonSerializer.Deserialize<Order>(json);
-                order.Id = Guid.NewGuid().ToString();
+                order.id = Guid.NewGuid().ToString();
 
                 ItemResponse<Order> createItemResponse = await container.CreateItemAsync(order, new PartitionKey(order.Id));
                 HttpStatusCode code = createItemResponse.StatusCode;
