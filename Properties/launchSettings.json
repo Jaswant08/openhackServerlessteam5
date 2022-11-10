@@ -1,9 +1,0 @@
-{
-  "profiles": {
-    "OpenHackTeam5": {
-      "commandName": "Project",
-      "commandLineArgs": "--port 7199",
-      "launchBrowser": false
-    }
-  }
-}
